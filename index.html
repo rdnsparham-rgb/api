@@ -1,169 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>فوتبال 3D با بات</title>
+<meta charset="utf-8">
+<title>چت بات نمایشی - مدل سنگین</title>
 <style>
-body {
-  margin: 0;
-  background: #87ceeb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  perspective: 800px;
-  font-family: sans-serif;
-}
-
-#game {
-  position: relative;
-  width: 600px;
-  height: 400px;
-  background: #4CAF50;
-  border: 3px solid #333;
-  border-radius: 10px;
-  overflow: hidden;
-  transform-style: preserve-3d;
-}
-
-#goal {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 200px;
-  height: 50px;
-  margin-left: -100px;
-  border: 3px solid #fff;
-  background: #222;
-  transform: translateZ(50px);
-}
-
-#player {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  width: 50px;
-  height: 50px;
-  margin-left: -25px;
-  background: red;
-  border-radius: 50%;
-  transform: translateZ(0);
-}
-
-#ball {
-  position: absolute;
-  bottom: 70px;
-  left: 50%;
-  width: 20px;
-  height: 20px;
-  margin-left: -10px;
-  background: white;
-  border-radius: 50%;
-  transform: translateZ(0);
-}
-
-#bot {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 60px;
-  height: 30px;
-  margin-left: -30px;
-  background: blue;
-  border-radius: 5px;
-  transform: translateZ(50px);
-}
-
-#status {
-  margin-top: 20px;
-  text-align: center;
-  font-size: 1.2em;
-}
-
-#shots {
-  margin-top: 10px;
-  text-align: center;
-  font-size: 1.1em;
-}
-button {
-  margin-top: 10px;
-  padding: 8px 16px;
-  font-size: 1em;
-}
+  body { font-family: Tahoma, sans-serif; background:#f6f7fb; color:#111; padding:20px; }
+  #chat { background:#fff; border:1px solid #ddd; padding:12px; height:420px; overflow:auto; }
+  .u { color:#0b63d6; margin:8px 0; }
+  .a { color:#0b8a5f; margin:8px 0; }
+  #controls { margin-top:12px; }
+  input[type="text"]{ width:70%; padding:8px; }
+  button{ padding:8px 12px; }
+  .meta { font-size:12px; color:#666; margin-top:10px; }
 </style>
 </head>
 <body>
+<h2>چت بات (مدل سنگین - نمایشی)</h2>
+<div id="chat"><div class="meta">این رابط فقط نمایشی است. مدل سنگین باید در سرور یا محیط آموزشی شما اجرا شود.</div></div>
 
-<div>
-  <div id="game">
-    <div id="goal"></div>
-    <div id="bot"></div>
-    <div id="player"></div>
-    <div id="ball"></div>
-  </div>
-  <div id="status">شوت خود را بزن!</div>
-  <div id="shots">شوت‌های باقی مانده: 3</div>
-  <div style="text-align:center;"><button onclick="resetGame()">شروع مجدد</button></div>
+<div id="controls">
+  <input id="msg" type="text" placeholder="پیام خود را بنویسید...">
+  <button id="send">ارسال</button>
+  <button id="addData">افزودن به dataset (محلی)</button>
 </div>
 
 <script>
-let shots = 3;
-let ball = document.getElementById("ball");
-let player = document.getElementById("player");
-let bot = document.getElementById("bot");
-let status = document.getElementById("status");
-let shotsDisplay = document.getElementById("shots");
-let gameOver = false;
+const chat = document.getElementById('chat');
+const msg = document.getElementById('msg');
 
-function resetGame(){
-  shots = 3;
-  gameOver = false;
-  ball.style.bottom = "70px";
-  ball.style.left = "50%";
-  bot.style.left = "50%";
-  status.textContent = "شوت خود را بزن!";
-  shotsDisplay.textContent = "شوت‌های باقی مانده: "+shots;
+function appendUser(text){
+  const d = document.createElement('div'); d.className='u'; d.textContent='شما: ' + text; chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+}
+function appendBot(text){
+  const d = document.createElement('div'); d.className='a'; d.textContent='مدل: ' + text; chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
 }
 
-function shootBall(){
-  if(gameOver || shots<=0) return;
+document.getElementById('send').addEventListener('click', ()=>{
+  const t = msg.value.trim(); if(!t) return;
+  appendUser(t);
+  appendBot('در حال پردازش... (مدل بزرگ باید در سرور آموزشی اجرا شود).');
+  setTimeout(()=> {
+    appendBot('پاسخ نمایشی: برای پاسخگویی کامل، مدل سنگین را در سرور آموزش دیده اجرا کنید.');
+  }, 1200);
+  msg.value='';
+});
 
-  shots--;
-  shotsDisplay.textContent = "شوت‌های باقی مانده: "+shots;
-
-  // حرکت توپ
-  let ballX = 50; // درصد
-  let botX = 50;
-  
-  // بات حرکت تصادفی
-  botX = Math.random()*70+15;
-  bot.style.left = botX+"%";
-
-  // انیمیشن توپ
-  let interval = setInterval(()=>{
-    let bottom = parseFloat(ball.style.bottom);
-    if(bottom>=300){
-      clearInterval(interval);
-      // بررسی گل یا مهار
-      let ballLeft = ball.offsetLeft + 10;
-      let botLeft = bot.offsetLeft;
-      if(ballLeft > botLeft && ballLeft < botLeft+60){
-        status.textContent = "بات توپ را مهار کرد!";
-      } else {
-        status.textContent = "گل شد! 🎉";
-      }
-      if(shots<=0) gameOver = true;
-      ball.style.bottom = "70px";
-      ball.style.left = "50%";
-    } else {
-      ball.style.bottom = (bottom+5)+"px";
-    }
-  }, 30);
-}
-
-// کلیک روی بازیکن یا کل زمین شوت می‌کند
-document.getElementById("game").addEventListener("click", shootBall);
+document.getElementById('addData').addEventListener('click', ()=>{
+  const t = msg.value.trim(); if(!t){ alert('ابتدا پیام را وارد کنید.'); return; }
+  let ds = localStorage.getItem('user_dataset') || '';
+  ds += '<|user|> ' + t + '\\n<|assistant|> ' + ' [پاسخ مورد انتظار خود را اینجا بنویسید]\\n\\n';
+  localStorage.setItem('user_dataset', ds);
+  alert('پیام به dataset محلی اضافه شد. می‌توانید آن را استخراج کرده و برای آموزش استفاده کنید.');
+});
 </script>
 
 </body>
