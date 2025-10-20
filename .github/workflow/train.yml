@@ -1,0 +1,54 @@
+name: Train Heavy Model
+
+on:
+  workflow_dispatch:
+    inputs:
+      epochs:
+        description: 'Number of training epochs'
+        required: true
+        default: '1'
+      batch_size:
+        description: 'Batch size'
+        required: true
+        default: '8'
+      run_on:
+        description: 'Runner label (self-hosted GPU runner)'
+        required: true
+        default: 'gpu-runner'
+
+jobs:
+  train:
+    runs-on: ${{ github.event.inputs.run_on }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cu118
+          pip install transformers datasets accelerate safetensors
+
+      - name: Run training
+        env:
+          DATASET_PATH: ./model_project/dataset.txt
+          OUTPUT_DIR: ./model_project/output
+        run: |
+          mkdir -p $OUTPUT_DIR
+          echo "Starting training with epochs=${{ github.event.inputs.epochs }} batch_size=${{ github.event.inputs.batch_size }}"
+          python train.py \
+            --dataset $DATASET_PATH \
+            --output_dir $OUTPUT_DIR \
+            --epochs ${{ github.event.inputs.epochs }} \
+            --batch_size ${{ github.event.inputs.batch_size }} || true
+
+      - name: Upload artifacts (model checkpoints)
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-checkpoints
+          path: ./model_project/output
